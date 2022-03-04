@@ -267,13 +267,13 @@ static void load_apps_and_nodes(const char *file, app_mapper &apps, node_mapper 
 
     std::ifstream infile(file, std::ios::in);
     int total_nodes;
-    infile >> total_nodes;
+    int disks_per_node;
+    infile >> total_nodes >> disks_per_node;
 
     std::string ip_port;
-    int disks_per_node;
     std::vector<dsn::rpc_address> node_list;
     for (int i = 0; i < total_nodes; ++i) {
-        infile >> ip_port >> disks_per_node;
+        infile >> ip_port;
         node_list.push_back(get_rpc_address(ip_port));
     }
 
