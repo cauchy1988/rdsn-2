@@ -260,10 +260,11 @@ dsn::rpc_address get_rpc_address(const std::string &ip_port)
                        boost::lexical_cast<int>(ip_port.substr(splitter + 1)));
 }
 
-static void load_apps_and_nodes(const char *file, app_mapper &apps, node_mapper &nodes)
+static void load_apps_and_nodes(const char *file, app_mapper &apps, node_mapper &nodes, nodes_fs_manager &manager)
 {
     apps.clear();
     nodes.clear();
+    manager.clear();
 
     std::ifstream infile(file, std::ios::in);
     int total_nodes;
@@ -305,6 +306,7 @@ static void load_apps_and_nodes(const char *file, app_mapper &apps, node_mapper 
     }
 
     generate_node_mapper(nodes, apps, node_list);
+    generate_node_fs_manager(apps, nodes, manager, disks_per_node);
 }
 
 void meta_service_test_app::balance_config_file()
@@ -313,9 +315,10 @@ void meta_service_test_app::balance_config_file()
 
     app_mapper apps;
     node_mapper nodes;
+    nodes_fs_manager manager;
 
     for (int i = 0; suits[i]; ++i) {
-        load_apps_and_nodes(suits[i], apps, nodes);
+        load_apps_and_nodes(suits[i], apps, nodes, manager);
 
         greedy_load_balancer greedy_lb(nullptr);
         server_load_balancer *lb = &greedy_lb;
@@ -324,7 +327,7 @@ void meta_service_test_app::balance_config_file()
         // iterate 1000 times
         for (int i = 0; i < 1000 && lb->balance({&apps, &nodes}, ml); ++i) {
             dinfo("the %dth round of balancer", i);
-            migration_check_and_apply(apps, nodes, ml, nullptr);
+            migration_check_and_apply(apps, nodes, ml, &manager);
             lb->check({&apps, &nodes}, ml);
             dinfo("balance checker operation count = %d", ml.size());
         }
