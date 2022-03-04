@@ -270,9 +270,10 @@ static void load_apps_and_nodes(const char *file, app_mapper &apps, node_mapper 
     infile >> total_nodes;
 
     std::string ip_port;
+    int disks_per_node;
     std::vector<dsn::rpc_address> node_list;
     for (int i = 0; i < total_nodes; ++i) {
-        infile >> ip_port;
+        infile >> ip_port >> disks_per_node;
         node_list.push_back(get_rpc_address(ip_port));
     }
 
@@ -299,6 +300,8 @@ static void load_apps_and_nodes(const char *file, app_mapper &apps, node_mapper 
                 app->partitions[j].secondaries.push_back(get_rpc_address(ip_port));
             }
         }
+
+        generate_app_serving_replica_info(app, disks_per_node);
     }
 
     generate_node_mapper(nodes, apps, node_list);
